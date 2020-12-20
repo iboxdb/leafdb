@@ -14,7 +14,7 @@ mvn exec:java
 
 #### Result
 
-**2Cores + 8G**
+**VM 2Cores + 8G**
 
 ```sql
 threadCount= 100,000 batchCount= 10 reinterationSelect= 3 
