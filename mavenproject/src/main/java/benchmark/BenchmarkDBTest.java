@@ -3,31 +3,25 @@ package benchmark;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
+import java.util.logging.*;
+import java.io.*;
 
 import iBoxDB.LocalServer.*;
 import iBoxDB.LocalServer.IO.*;
 
-import com.mongodb.MongoClientSettings;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoCursor;
-import com.mongodb.client.MongoDatabase;
+import com.mongodb.*;
+import com.mongodb.client.*;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
-
-import java.util.List;
-
+import org.bson.conversions.Bson;
 import static com.mongodb.client.model.Filters.*;
 import static com.mongodb.client.model.Updates.set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
-import org.bson.conversions.Bson;
 
-//  iBoxDB.java v2.15
-/*
+
+/* iBoxDB.java Zero Setup */
+ /*
 mongodb-linux-x86_64-rhel70-4.2.3, mongodb-driver-sync
 mkdir /tmp/mdata
 ./mongod --dbpath /tmp/mdata  
@@ -40,11 +34,20 @@ public class BenchmarkDBTest {
 
     public static void main(String[] args) {
         try {
-
+            System.out.println("Benchmark ver= 1.1");
             System.out.format("threadCount= %,d batchCount= %,d reinterationSelect= %,d %n %n",
                     threadCount, batchCount, reinterationSelect);
 
-            DB.root("../");
+            String root = "../"; //"/tmp"
+
+            root = System.getProperty("user.home");
+            root += File.separator;
+            root += "TEST_LEAF_NOSQL";
+            new File(root).mkdirs();
+
+            System.out.format("PATH= %s %n", root);
+            DB.root(root);
+
             System.out.println("iBoxDB");
             TestiBoxDB();
             System.out.println();
@@ -479,8 +482,8 @@ public class BenchmarkDBTest {
         public static class FileConfig extends BoxFileStreamConfig {
 
             public FileConfig() {
-                CacheLength = mb(512);
-                EnsureTable(T1.class, "T1", "Id");
+                //CacheLength = mb(512);
+                ensureTable(T1.class, "T1", "Id");
             }
         }
 
