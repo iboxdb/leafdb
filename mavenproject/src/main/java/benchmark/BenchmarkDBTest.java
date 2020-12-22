@@ -30,11 +30,11 @@ public class BenchmarkDBTest {
 
     static int threadCount = 100_000;
     static int batchCount = 10;
-    static int reinterationSelect = 6;
+    static int reinterationSelect = 12;
 
     public static void main(String[] args) {
         try {
-            System.out.println("Benchmark ver= 1.1");
+            System.out.println("Benchmark ver= 1.2");
             System.out.format("threadCount= %,d batchCount= %,d reinterationSelect= %,d %n %n",
                     threadCount, batchCount, reinterationSelect);
 
