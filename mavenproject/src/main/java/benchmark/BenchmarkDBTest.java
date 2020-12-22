@@ -30,7 +30,7 @@ public class BenchmarkDBTest {
 
     static int threadCount = 100_000;
     static int batchCount = 10;
-    static int reinterationSelect = 3;
+    static int reinterationSelect = 6;
 
     public static void main(String[] args) {
         try {
@@ -254,178 +254,180 @@ public class BenchmarkDBTest {
         mongoLogger.setLevel(Level.OFF);
 
         MongoClient mongoClient = MongoClients.create();
+        try {
+            CodecRegistry pojoCodecRegistry = fromRegistries(MongoClientSettings.getDefaultCodecRegistry(),
+                    fromProviders(PojoCodecProvider.builder().automatic(true).build()));
+            MongoDatabase database = mongoClient.getDatabase("test").withCodecRegistry(pojoCodecRegistry);
+            MongoCollection<T1> coll = database.getCollection("T1", T1.class);
+            coll.drop();
 
-        CodecRegistry pojoCodecRegistry = fromRegistries(MongoClientSettings.getDefaultCodecRegistry(),
-                fromProviders(PojoCodecProvider.builder().automatic(true).build()));
-        MongoDatabase database = mongoClient.getDatabase("test").withCodecRegistry(pojoCodecRegistry);
-        MongoCollection<T1> coll = database.getCollection("T1", T1.class);
-        coll.drop();
+            long watch = System.currentTimeMillis();
+            final AtomicInteger count = new AtomicInteger(0);
+            ExecutorService pool = CreatePool();
+            for (int i = 0; i < threadCount; i++) {
+                final int p = i;
+                pool.execute(new Runnable() {
+                    @Override
+                    public void run() {
 
-        long watch = System.currentTimeMillis();
-        final AtomicInteger count = new AtomicInteger(0);
-        ExecutorService pool = CreatePool();
-        for (int i = 0; i < threadCount; i++) {
-            final int p = i;
-            pool.execute(new Runnable() {
-                @Override
-                public void run() {
-
-                    for (int i = 0; i < batchCount; i++) {
-                        int id = (p * batchCount) + i;
-                        coll.insertOne(new T1(id, Integer.toString(id)));
-                        count.incrementAndGet();
-
-                    }
-
-                    for (int t = 0; t < reinterationSelect; t++) {
-                        int minId = p * batchCount + 0;
-                        int maxId = p * batchCount + batchCount;
-                        Bson q = and(gte("_id", minId), lt("_id", maxId));
-
-                        try (MongoCursor<T1> reader = coll.find(q).iterator()) {
-                            int ti = minId;
-                            while (reader.hasNext()) {
-                                T1 t1 = reader.next();
-                                int iv = t1.getId();
-                                if (ti != iv) {
-                                    System.out.println("e");
-                                    throw new RuntimeException(ti + "  " + iv);
-                                }
-                                ti++;
-                            }
-                            if (ti != maxId) {
-                                System.out.println("e");
-                                throw new RuntimeException();
-                            }
-                        }
-                    }
-
-                }
-            });
-        }
-        pool.shutdown();
-        pool.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);
-        watch = System.currentTimeMillis() - watch;
-        if (count.get() != (batchCount * threadCount)) {
-            throw new Exception(count + "  " + (batchCount * threadCount));
-        }
-        int avg = (int) (count.get() / (watch / 1000.0));
-
-        System.out.format("MongoDB Insert: %,d AVG: %,d objects/s %n", count.get(), avg);
-
-        // ---------------Update-----------------------------
-        watch = System.currentTimeMillis();
-        count.set(0);
-        pool = CreatePool();
-        for (int i = 0; i < threadCount; i++) {
-            final int p = i;
-            pool.execute(new Runnable() {
-                @Override
-                public void run() {
-                    for (int i = 0; i < batchCount; i++) {
-                        int id = (p * batchCount) + i;
-                        if (coll.updateOne(eq("_id", id), set("value", "S" + id)).getModifiedCount() == 1) {
+                        for (int i = 0; i < batchCount; i++) {
+                            int id = (p * batchCount) + i;
+                            coll.insertOne(new T1(id, Integer.toString(id)));
                             count.incrementAndGet();
+
                         }
-                    }
 
-                    for (int t = 0; t < reinterationSelect; t++) {
-                        int minId = p * batchCount + 0;
-                        int maxId = p * batchCount + batchCount;
-                        Bson q = and(gte("_id", minId), lt("_id", maxId));
+                        for (int t = 0; t < reinterationSelect; t++) {
+                            int minId = p * batchCount + 0;
+                            int maxId = p * batchCount + batchCount;
+                            Bson q = and(gte("_id", minId), lt("_id", maxId));
 
-                        try (MongoCursor<T1> reader = coll.find(q).iterator()) {
-                            int ti = minId;
-                            while (reader.hasNext()) {
-                                T1 t1 = reader.next();
-                                int iv = t1.getId();
-                                if (ti != iv) {
+                            try (MongoCursor<T1> reader = coll.find(q).iterator()) {
+                                int ti = minId;
+                                while (reader.hasNext()) {
+                                    T1 t1 = reader.next();
+                                    int iv = t1.getId();
+                                    if (ti != iv) {
+                                        System.out.println("e");
+                                        throw new RuntimeException(ti + "  " + iv);
+                                    }
+                                    ti++;
+                                }
+                                if (ti != maxId) {
                                     System.out.println("e");
-                                    throw new RuntimeException(ti + "  " + iv);
+                                    throw new RuntimeException();
                                 }
-                                if (!("S" + ti).equals(t1.getValue())) {
-                                    System.out.println("e2");
-                                    throw new RuntimeException(ti + "  " + iv);
-                                }
-                                ti++;
-                            }
-                            if (ti != maxId) {
-                                System.out.println("e");
-                                throw new RuntimeException();
                             }
                         }
+
                     }
-                }
-            });
-        }
-        pool.shutdown();
-        pool.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);
-        watch = System.currentTimeMillis() - watch;
-        if (count.get() != (batchCount * threadCount)) {
-            throw new Exception(count + "  " + (batchCount * threadCount));
-        }
-        avg = (int) (count.get() / (watch / 1000.0));
-        System.out.format("MongoDB Update: %,d AVG: %,d objects/s %n", count.get(), avg);
+                });
+            }
+            pool.shutdown();
+            pool.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);
+            watch = System.currentTimeMillis() - watch;
+            if (count.get() != (batchCount * threadCount)) {
+                throw new Exception(count + "  " + (batchCount * threadCount));
+            }
+            int avg = (int) (count.get() / (watch / 1000.0));
 
-        //--------------- Delete --------------------
-        watch = System.currentTimeMillis();
-        count.set(0);
-        pool = CreatePool();
-        for (int i = 0; i < threadCount; i++) {
-            final int p = i;
-            pool.execute(new Runnable() {
-                @Override
-                public void run() {
-                    for (int t = 0; t < reinterationSelect; t++) {
-                        int minId = p * batchCount + 0;
-                        int maxId = p * batchCount + batchCount;
-                        Bson q = and(gte("_id", minId), lt("_id", maxId));
+            System.out.format("MongoDB Insert: %,d AVG: %,d objects/s %n", count.get(), avg);
 
-                        try (MongoCursor<T1> reader = coll.find(q).iterator()) {
-                            int ti = minId;
-                            while (reader.hasNext()) {
-                                T1 t1 = reader.next();
-                                int iv = t1.getId();
-                                if (ti != iv) {
+            // ---------------Update-----------------------------
+            watch = System.currentTimeMillis();
+            count.set(0);
+            pool = CreatePool();
+            for (int i = 0; i < threadCount; i++) {
+                final int p = i;
+                pool.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        for (int i = 0; i < batchCount; i++) {
+                            int id = (p * batchCount) + i;
+                            if (coll.updateOne(eq("_id", id), set("value", "S" + id)).getModifiedCount() == 1) {
+                                count.incrementAndGet();
+                            }
+                        }
+
+                        for (int t = 0; t < reinterationSelect; t++) {
+                            int minId = p * batchCount + 0;
+                            int maxId = p * batchCount + batchCount;
+                            Bson q = and(gte("_id", minId), lt("_id", maxId));
+
+                            try (MongoCursor<T1> reader = coll.find(q).iterator()) {
+                                int ti = minId;
+                                while (reader.hasNext()) {
+                                    T1 t1 = reader.next();
+                                    int iv = t1.getId();
+                                    if (ti != iv) {
+                                        System.out.println("e");
+                                        throw new RuntimeException(ti + "  " + iv);
+                                    }
+                                    if (!("S" + ti).equals(t1.getValue())) {
+                                        System.out.println("e2");
+                                        throw new RuntimeException(ti + "  " + iv);
+                                    }
+                                    ti++;
+                                }
+                                if (ti != maxId) {
                                     System.out.println("e");
-                                    throw new RuntimeException(ti + "  " + iv);
+                                    throw new RuntimeException();
                                 }
-                                if (!("S" + ti).equals(t1.getValue())) {
-                                    System.out.println("e2");
-                                    throw new RuntimeException(ti + "  " + iv);
-                                }
-                                ti++;
-                            }
-                            if (ti != maxId) {
-                                System.out.println("e");
-                                throw new RuntimeException();
                             }
                         }
                     }
+                });
+            }
+            pool.shutdown();
+            pool.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);
+            watch = System.currentTimeMillis() - watch;
+            if (count.get() != (batchCount * threadCount)) {
+                throw new Exception(count + "  " + (batchCount * threadCount));
+            }
+            avg = (int) (count.get() / (watch / 1000.0));
+            System.out.format("MongoDB Update: %,d AVG: %,d objects/s %n", count.get(), avg);
 
-                    for (int i = 0; i < batchCount; i++) {
-                        int id = (p * batchCount) + i;
-                        if (coll.deleteOne(eq("_id", id)).getDeletedCount() == 1) {
-                            count.incrementAndGet();
+            //--------------- Delete --------------------
+            watch = System.currentTimeMillis();
+            count.set(0);
+            pool = CreatePool();
+            for (int i = 0; i < threadCount; i++) {
+                final int p = i;
+                pool.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        for (int t = 0; t < reinterationSelect; t++) {
+                            int minId = p * batchCount + 0;
+                            int maxId = p * batchCount + batchCount;
+                            Bson q = and(gte("_id", minId), lt("_id", maxId));
+
+                            try (MongoCursor<T1> reader = coll.find(q).iterator()) {
+                                int ti = minId;
+                                while (reader.hasNext()) {
+                                    T1 t1 = reader.next();
+                                    int iv = t1.getId();
+                                    if (ti != iv) {
+                                        System.out.println("e");
+                                        throw new RuntimeException(ti + "  " + iv);
+                                    }
+                                    if (!("S" + ti).equals(t1.getValue())) {
+                                        System.out.println("e2");
+                                        throw new RuntimeException(ti + "  " + iv);
+                                    }
+                                    ti++;
+                                }
+                                if (ti != maxId) {
+                                    System.out.println("e");
+                                    throw new RuntimeException();
+                                }
+                            }
+                        }
+
+                        for (int i = 0; i < batchCount; i++) {
+                            int id = (p * batchCount) + i;
+                            if (coll.deleteOne(eq("_id", id)).getDeletedCount() == 1) {
+                                count.incrementAndGet();
+                            }
                         }
                     }
-                }
-            });
-        }
-        pool.shutdown();
-        pool.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);
-        watch = System.currentTimeMillis() - watch;
-        if (count.get() != (batchCount * threadCount)) {
-            throw new Exception(count + "  " + (batchCount * threadCount));
-        }
-        avg = (int) (count.get() / (watch / 1000.0));
-        System.out.format("MongoDB Delete: %,d AVG: %,d objects/s %n", count.get(), avg);
-        //------------------End------------- 
+                });
+            }
+            pool.shutdown();
+            pool.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);
+            watch = System.currentTimeMillis() - watch;
+            if (count.get() != (batchCount * threadCount)) {
+                throw new Exception(count + "  " + (batchCount * threadCount));
+            }
+            avg = (int) (count.get() / (watch / 1000.0));
+            System.out.format("MongoDB Delete: %,d AVG: %,d objects/s %n", count.get(), avg);
+            //------------------End------------- 
 
-        if (coll.countDocuments() != 0) {
-            throw new RuntimeException("SC");
+            if (coll.countDocuments() != 0) {
+                throw new RuntimeException("SC");
+            }
+        } finally {
+            mongoClient.close();
         }
-        mongoClient.close();
     }
 
     private static ExecutorService CreatePool() {
@@ -482,7 +484,7 @@ public class BenchmarkDBTest {
         public static class FileConfig extends BoxFileStreamConfig {
 
             public FileConfig() {
-                //CacheLength = mb(512);
+                CacheLength = mb(300);
                 ensureTable(T1.class, "T1", "Id");
             }
         }
