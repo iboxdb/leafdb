@@ -6,8 +6,8 @@ import java.util.concurrent.atomic.*;
 import java.util.logging.*;
 import java.io.*;
 
-import iBoxDB.LocalServer.*;
-import iBoxDB.LocalServer.IO.*;
+import iboxdb.localserver.*;
+import iboxdb.localserver.io.*;
 
 import com.mongodb.*;
 import com.mongodb.client.*;
@@ -21,10 +21,14 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
 
 /* iBoxDB.java Zero Setup */
+
  /*
-mongodb-linux-x86_64-rhel70-4.2.3, mongodb-driver-sync
-mkdir /tmp/mdata
-./mongod --dbpath /tmp/mdata  
+mongodb-linux-x86_64-rhel93-8.2.1, mongodb-driver-sync
+
+$ rm -rf /tmp/mdata/ 
+$ mkdir /tmp/mdata
+$ ./mongod --dbpath /tmp/mdata  
+
  */
 public class BenchmarkDBTest {
 
@@ -34,26 +38,29 @@ public class BenchmarkDBTest {
 
     public static void main(String[] args) {
         try {
-            System.out.println("Benchmark ver= 1.2");
+
+            System.out.println("Benchmark Version 1.3, Java=" + System.getProperty("java.version"));
             System.out.format("threadCount= %,d batchCount= %,d reinterationSelect= %,d %n %n",
                     threadCount, batchCount, reinterationSelect);
 
-            String root = "../"; //"/tmp"
+            File mvnConfig = new File(".mvn/jvm.config");
+            if (mvnConfig.exists()) {
+                System.out.println("Maven 3 -Xmx setting " + mvnConfig.getAbsolutePath());
+            }
 
-            root = System.getProperty("user.home");
-            root += File.separator;
-            root += "TEST_LEAF_NOSQL";
-            new File(root).mkdirs();
+            long tm = java.lang.Runtime.getRuntime().maxMemory();
+            tm = (tm / 1024L / 1024L);
+            System.out.println("-Xmx " + tm + " MB");
 
-            System.out.format("PATH= %s %n", root);
-            DB.root(root);
+            File root = new File("..", "TEST_LEAF_NOSQL");
+            System.out.format("PATH= %s %n", root.getAbsolutePath());
+            DB.root(root.getAbsolutePath());
 
             System.out.println("iBoxDB");
             TestiBoxDB();
             System.out.println();
 
             System.gc();
-            System.runFinalization();
 
             System.out.println("MongoDB");
             try {
@@ -239,7 +246,7 @@ public class BenchmarkDBTest {
             avg = (int) (count.get() / (watch / 1000.0));
             System.out.format("iBoxDB Delete: %,d AVG: %,d objects/s %n", count.get(), avg);
 
-            if (auto.selectCount("from T1") != 0) {
+            if (auto.count("from T1") != 0) {
                 throw new RuntimeException("SC");
             }
 
@@ -251,6 +258,8 @@ public class BenchmarkDBTest {
     public static void TestMongoDB() throws Exception {
 
         Logger mongoLogger = Logger.getLogger("org.mongodb.driver");
+        mongoLogger.setLevel(Level.OFF);
+        mongoLogger = Logger.getLogger("org.bson");
         mongoLogger.setLevel(Level.OFF);
 
         MongoClient mongoClient = MongoClients.create();
@@ -426,6 +435,7 @@ public class BenchmarkDBTest {
                 throw new RuntimeException("SC");
             }
         } finally {
+            // was interrupted but is still alive after waiting at least 15000msecs
             mongoClient.close();
         }
     }
@@ -476,7 +486,6 @@ public class BenchmarkDBTest {
 
         @Override
         protected DatabaseConfig BuildDatabaseConfig(long address) {
-
             return new FileConfig();
 
         }
@@ -484,7 +493,6 @@ public class BenchmarkDBTest {
         public static class FileConfig extends BoxFileStreamConfig {
 
             public FileConfig() {
-                CacheLength = mb(300);
                 ensureTable(T1.class, "T1", "Id");
             }
         }
