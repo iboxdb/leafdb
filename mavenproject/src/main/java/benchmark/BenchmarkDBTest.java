@@ -25,7 +25,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
  /*
 mongodb-linux-x86_64-rhel93-8.2.1, mongodb-driver-sync
 
-$ rm -rf /tmp/mdata/ 
+$ rm -rf /tmp/mdata
 $ mkdir /tmp/mdata
 $ ./mongod --dbpath /tmp/mdata  
 
