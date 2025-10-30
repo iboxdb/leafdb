@@ -29,9 +29,9 @@ Databases Benchmark Version 3 with iBoxDB and MongoDB.
 #### Run
 ```
 //close all IDE first
-
-mvn clean
-mvn package exec:java
+$ cd mavenproject
+$ mvn clean
+$ mvn package exec:java
 ```
 
 
