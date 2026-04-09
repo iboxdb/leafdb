@@ -49,7 +49,7 @@ threadCount=100,000 batchCount=10 reinterationSelect=12
 iBoxDB
 iBoxDB Insert: 1,000,000 AVG: 10,664 objects/s 
 iBoxDB Update: 1,000,000 AVG: 20,243 objects/s 
-iBoxDB Delete: 1,000,000 AVG: 8,495 objects/s 
+iBoxDB Delete: 1,000,000 AVG:  8,495 objects/s 
 
 MongoDB
 MongoDB Insert: 1,000,000 AVG: 3,070 objects/s 
