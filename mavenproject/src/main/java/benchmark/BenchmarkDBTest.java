@@ -39,7 +39,7 @@ public class BenchmarkDBTest {
     public static void main(String[] args) {
         try {
 
-            System.out.println("Benchmark Version 1.3, Java=" + System.getProperty("java.version"));
+            System.out.println("Benchmark Version 1.4, Java=" + System.getProperty("java.version"));
             System.out.format("threadCount= %,d batchCount= %,d reinterationSelect= %,d %n %n",
                     threadCount, batchCount, reinterationSelect);
 
@@ -82,9 +82,9 @@ public class BenchmarkDBTest {
             final Database db = server.getInstance();
             final AutoBox auto = db.get();
 
-            long watch = System.currentTimeMillis();
+            long watch = 0;
             final AtomicInteger count = new AtomicInteger(0);
-            ExecutorService pool = CreatePool();
+            ShuffleExecutorService pool = CreatePool();
             for (int i = 0; i < threadCount; i++) {
                 final int p = i;
                 pool.execute(new Runnable() {
@@ -121,9 +121,8 @@ public class BenchmarkDBTest {
                     }
                 });
             }
-            pool.shutdown();
-            pool.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);
-            watch = System.currentTimeMillis() - watch;
+
+            watch = pool.awaitTermination();
             if (count.get() != (batchCount * threadCount)) {
                 throw new RuntimeException(count + "  "
                         + (batchCount * threadCount));
@@ -132,7 +131,6 @@ public class BenchmarkDBTest {
             System.out.format("iBoxDB Insert: %,d AVG: %,d objects/s %n", count.get(), avg);
 
             // ----------------------Update------------------
-            watch = System.currentTimeMillis();
             count.set(0);
             pool = CreatePool();
             for (int i = 0; i < threadCount; i++) {
@@ -181,9 +179,7 @@ public class BenchmarkDBTest {
                     }
                 });
             }
-            pool.shutdown();
-            pool.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);
-            watch = System.currentTimeMillis() - watch;
+            watch = pool.awaitTermination();
             if (count.get() != (batchCount * threadCount)) {
                 throw new RuntimeException(count + "  "
                         + (batchCount * threadCount));
@@ -192,7 +188,6 @@ public class BenchmarkDBTest {
             System.out.format("iBoxDB Update: %,d AVG: %,d objects/s %n", count.get(), avg);
 
             // ------------------------Delete------------------
-            watch = System.currentTimeMillis();
             count.set(0);
             pool = CreatePool();
             for (int i = 0; i < threadCount; i++) {
@@ -236,9 +231,7 @@ public class BenchmarkDBTest {
                     }
                 });
             }
-            pool.shutdown();
-            pool.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);
-            watch = System.currentTimeMillis() - watch;
+            watch = pool.awaitTermination();
             if (count.get() != (batchCount * threadCount)) {
                 throw new RuntimeException(count + "  "
                         + (batchCount * threadCount));
@@ -270,9 +263,9 @@ public class BenchmarkDBTest {
             MongoCollection<T1> coll = database.getCollection("T1", T1.class);
             coll.drop();
 
-            long watch = System.currentTimeMillis();
+            long watch = 0;
             final AtomicInteger count = new AtomicInteger(0);
-            ExecutorService pool = CreatePool();
+            ShuffleExecutorService pool = CreatePool();
             for (int i = 0; i < threadCount; i++) {
                 final int p = i;
                 pool.execute(new Runnable() {
@@ -312,9 +305,7 @@ public class BenchmarkDBTest {
                     }
                 });
             }
-            pool.shutdown();
-            pool.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);
-            watch = System.currentTimeMillis() - watch;
+            watch = pool.awaitTermination();
             if (count.get() != (batchCount * threadCount)) {
                 throw new Exception(count + "  " + (batchCount * threadCount));
             }
@@ -323,7 +314,6 @@ public class BenchmarkDBTest {
             System.out.format("MongoDB Insert: %,d AVG: %,d objects/s %n", count.get(), avg);
 
             // ---------------Update-----------------------------
-            watch = System.currentTimeMillis();
             count.set(0);
             pool = CreatePool();
             for (int i = 0; i < threadCount; i++) {
@@ -367,9 +357,7 @@ public class BenchmarkDBTest {
                     }
                 });
             }
-            pool.shutdown();
-            pool.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);
-            watch = System.currentTimeMillis() - watch;
+            watch = pool.awaitTermination();
             if (count.get() != (batchCount * threadCount)) {
                 throw new Exception(count + "  " + (batchCount * threadCount));
             }
@@ -377,7 +365,6 @@ public class BenchmarkDBTest {
             System.out.format("MongoDB Update: %,d AVG: %,d objects/s %n", count.get(), avg);
 
             //--------------- Delete --------------------
-            watch = System.currentTimeMillis();
             count.set(0);
             pool = CreatePool();
             for (int i = 0; i < threadCount; i++) {
@@ -421,9 +408,7 @@ public class BenchmarkDBTest {
                     }
                 });
             }
-            pool.shutdown();
-            pool.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);
-            watch = System.currentTimeMillis() - watch;
+            watch = pool.awaitTermination();
             if (count.get() != (batchCount * threadCount)) {
                 throw new Exception(count + "  " + (batchCount * threadCount));
             }
@@ -440,8 +425,38 @@ public class BenchmarkDBTest {
         }
     }
 
-    private static ExecutorService CreatePool() {
-        return Executors.newFixedThreadPool(8);
+    public static ShuffleExecutorService CreatePool() {
+        return new ShuffleExecutorService();
+    }
+    public static int poolSize = 8;
+
+    public static class ShuffleExecutorService {
+
+        ExecutorService ser = Executors.newFixedThreadPool(poolSize);
+
+        ArrayList<Runnable> list = new ArrayList<>(threadCount * batchCount + 16);
+
+        public void execute(Runnable run) {
+            list.add(run);
+        }
+
+        public long awaitTermination() throws InterruptedException {
+
+            Collections.shuffle(list);
+
+            long watch = System.currentTimeMillis();
+            for (Runnable r : list) {
+                ser.execute(r);
+            }
+            list = null;
+            ser.shutdown();
+
+            ser.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);
+            ser = null;
+
+            return System.currentTimeMillis() - watch;
+        }
+
     }
 
     public static class T1 {
