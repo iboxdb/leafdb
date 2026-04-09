@@ -41,17 +41,20 @@ $ mvn package exec:java
 **VM 2Cores + 8G**
 
 ```sql
-Benchmark Version 1.3, Java=25
-threadCount=100,000 batchCount=10 reinterationSelect=12
+
+Benchmark Version 1.4, Java=25
+threadCount=100,000 batchCount=10 reinterationSelect=12 
+-Xmx 4096 MB
+
 iBoxDB
-iBoxDB Insert: 1,000,000 AVG: 10,979 objects/s 
-iBoxDB Update: 1,000,000 AVG: 19,703 objects/s 
-iBoxDB Delete: 1,000,000 AVG: 11,684 objects/s 
+iBoxDB Insert: 1,000,000 AVG: 10,664 objects/s 
+iBoxDB Update: 1,000,000 AVG: 20,243 objects/s 
+iBoxDB Delete: 1,000,000 AVG: 8,495 objects/s 
 
 MongoDB
-MongoDB Insert: 1,000,000 AVG: 1,875 objects/s 
-MongoDB Update: 1,000,000 AVG: 1,738 objects/s 
-MongoDB Delete: 1,000,000 AVG: 1,835 objects/s 
+MongoDB Insert: 1,000,000 AVG: 3,070 objects/s 
+MongoDB Update: 1,000,000 AVG: 2,988 objects/s 
+MongoDB Delete: 1,000,000 AVG: 3,165 objects/s
 
 ```
 
