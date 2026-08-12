@@ -103,6 +103,7 @@
                                 <path>${project.build.directory}/modules</path>
                             </modulePath>
                             <modules>
+                            	<!-- jlink-image.tar.xz/7z = 17MB  -->
                             	<module>java.logging</module>
                             	<module>java.management</module>
                             	<module>java.sql</module>
