@@ -5,6 +5,7 @@
 
 echo "Install Java, Maven, Python. and "
 echo "pip install jpype1"
+echo "pip install pymongo"
 
 mvn clean package exec:java
 
