@@ -15,7 +15,7 @@ import jpype.imports
  
  
 print("startJVM...");
-jpype.startJVM()
+jpype.startJVM("--enable-native-access=ALL-UNNAMED")
 
 print("JVM: ", jpype.getDefaultJVMPath())
 print("Ver: ", jpype.getJVMVersion())
@@ -28,7 +28,7 @@ from java.math import BigDecimal
 from iboxdb.localserver import Ason,DB
 
 
-print("CRUD",Ason.class_,DB.class_)
+print("",Ason.class_,DB.class_)
 
 # Prototype
 proto = Ason("id:",Long(0), "name:",String("_"), "val:",Double(0.0), "star", BigDecimal('0'))
