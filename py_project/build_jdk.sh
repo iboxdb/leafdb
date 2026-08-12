@@ -3,6 +3,8 @@
 # https://github.com/moditect/moditect
 # [user@localhost site-packages]$ jdeps -s  org.jpype.jar 
 
+echo "Install Java, Maven, Python. and "
+echo "pip install jpype1"
 
 mvn clean package exec:java
 
