@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>linkjdk</groupId>
+    <artifactId>linkjdk</artifactId>
+    <version>1.0</version>
+    <packaging>jar</packaging>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+    </properties>
+    
+    <repositories>
+        <repository>
+            <id>LocalRepository2</id>
+            <name>Local Apache Maven Packages</name>
+            <url>file:${basedir}/libs/repository</url>
+        </repository>    
+    
+        <repository>
+            <id>RemoteRepository2</id>
+            <name>Remote Packages</name>
+            <url>https://github.com/iboxdb/teadb/raw/repository</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <dependency>
+            <groupId>iboxdb</groupId>
+            <artifactId>iboxdb</artifactId>
+            <version>4.1.2</version>
+        </dependency>
+    </dependencies>
+
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.5.0</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <mainClass>benchmark.BenchmarkDBTest</mainClass>
+                </configuration>
+            </plugin>
+            
+
+<plugin>
+    <groupId>org.moditect</groupId>
+    <artifactId>moditect-maven-plugin</artifactId>
+    <version>1.0.0.Final</version>
+    <executions>
+
+    
+    <!-- Adding module descriptors to existing JAR files -->
+        <execution>
+            <id>add-module-infos</id>
+            <phase>generate-resources</phase>
+            <goals>
+                <goal>add-module-info</goal>
+            </goals>
+            <configuration>
+            
+                <outputDirectory>${project.build.directory}/modules</outputDirectory>
+                <modules>
+                
+                    <module>
+                        <artifact>
+                            <groupId>iboxdb</groupId>
+            		    <artifactId>iboxdb</artifactId>
+            		    <version>4.1.2</version>
+                        </artifact>
+                         <moduleInfoSource>
+                            module iboxdb {
+                                exports iboxdb;
+                                exports iboxdb.localserver;
+                                exports iboxdb.localserver.io;
+                                exports iboxdb.localserver.e;
+                            }
+                        </moduleInfoSource>
+                    </module>
+                </modules>
+            </configuration>
+        </execution>    
+    
+    
+        <execution>
+            <id>create-runtime-image</id>
+            <phase>package</phase>
+            <goals>
+                <goal>create-runtime-image</goal>
+            </goals>
+            <configuration>
+            	<modulePath>
+                    <path>${project.build.directory}/modules</path>
+                </modulePath>
+                <modules>
+                    <module>java.base</module>
+                    <module>iboxdb</module>
+                </modules>
+                <jarInclusionPolicy>APP_WITH_DEPENDENCIES</jarInclusionPolicy>
+                <outputDirectory>
+                    ${project.build.directory}/jlink-image
+                </outputDirectory>
+                <launcher>
+                </launcher>
+            </configuration>
+        </execution>
+        
+        
+    </executions>
+</plugin>
+
+        </plugins>
+    </build>
+</project>
