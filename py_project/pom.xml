@@ -53,71 +53,76 @@
             </plugin>
             
 
-<plugin>
-    <groupId>org.moditect</groupId>
-    <artifactId>moditect-maven-plugin</artifactId>
-    <version>1.0.0.Final</version>
-    <executions>
+            <plugin>
+                <groupId>org.moditect</groupId>
+                <artifactId>moditect-maven-plugin</artifactId>
+                <version>1.0.0.Final</version>
+                <executions>
 
     
-    <!-- Adding module descriptors to existing JAR files -->
-        <execution>
-            <id>add-module-infos</id>
-            <phase>generate-resources</phase>
-            <goals>
-                <goal>add-module-info</goal>
-            </goals>
-            <configuration>
+                    <!-- Adding module descriptors to existing JAR files -->
+                    <execution>
+                        <id>add-module-infos</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>add-module-info</goal>
+                        </goals>
+                        <configuration>
             
-                <outputDirectory>${project.build.directory}/modules</outputDirectory>
-                <modules>
+                            <outputDirectory>${project.build.directory}/modules</outputDirectory>
+                            <modules>
                 
-                    <module>
-                        <artifact>
-                            <groupId>iboxdb</groupId>
-            		    <artifactId>iboxdb</artifactId>
-            		    <version>4.1.2</version>
-                        </artifact>
-                         <moduleInfoSource>
-                            module iboxdb {
-                                exports iboxdb;
-                                exports iboxdb.localserver;
-                                exports iboxdb.localserver.io;
-                                exports iboxdb.localserver.e;
-                            }
-                        </moduleInfoSource>
-                    </module>
-                </modules>
-            </configuration>
-        </execution>    
+                                <module>
+                                    <artifact>
+                                        <groupId>iboxdb</groupId>
+                                        <artifactId>iboxdb</artifactId>
+                                        <version>4.1.2</version>
+                                    </artifact>
+                                    <moduleInfoSource>
+                                        module iboxdb {
+                                        exports iboxdb;
+                                        exports iboxdb.localserver;
+                                        exports iboxdb.localserver.io;
+                                        exports iboxdb.localserver.e;
+                                        }
+                                    </moduleInfoSource>
+                                </module>
+                            </modules>
+                        </configuration>
+                    </execution>    
     
     
-        <execution>
-            <id>create-runtime-image</id>
-            <phase>package</phase>
-            <goals>
-                <goal>create-runtime-image</goal>
-            </goals>
-            <configuration>
-            	<modulePath>
-                    <path>${project.build.directory}/modules</path>
-                </modulePath>
-                <modules>
-                    <module>java.base</module>
-                    <module>iboxdb</module>
-                </modules>
-                <jarInclusionPolicy>APP_WITH_DEPENDENCIES</jarInclusionPolicy>
-                <outputDirectory>
-                    ${project.build.directory}/jlink-image
-                </outputDirectory>
-                <launcher>
-                </launcher>
-            </configuration>
-        </execution>
+                    <execution>
+                        <id>create-runtime-image</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>create-runtime-image</goal>
+                        </goals>
+                        <configuration>
+                            <modulePath>
+                                <path>${project.build.directory}/modules</path>
+                            </modulePath>
+                            <modules>
+                            	<module>java.logging</module>
+                            	<module>java.management</module>
+                            	<module>java.sql</module>
+                            	<module>java.xml</module>
+                                <module>java.base</module>
+                                <module>jdk.zipfs</module>
+                                <module>iboxdb</module>
+                            </modules>
+                            <jarInclusionPolicy>APP_WITH_DEPENDENCIES</jarInclusionPolicy>
+                            <outputDirectory>
+                                ${project.build.directory}/jlink-image
+                            </outputDirectory>
+                            <launcher>
+                            </launcher>
+                        </configuration>
+                    </execution>
         
         
-    </executions>
-</plugin>
+                </executions>
+            </plugin>
 
         </plugins>
     </build>

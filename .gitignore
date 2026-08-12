@@ -1,3 +1,9 @@
 db1.ibx
 db1.ibx.swp
 mavenproject/target/
+DBRoot
+
+**/target/
+*.ibx
+*.ibx.swp
+
