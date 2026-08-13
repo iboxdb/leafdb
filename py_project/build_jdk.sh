@@ -3,9 +3,9 @@
 # https://github.com/moditect/moditect
 # [user@localhost site-packages]$ jdeps -s  org.jpype.jar 
 
-echo "Install Java, Maven, Python. and "
-echo "pip install jpype1"
-echo "pip install pymongo"
+echo "1. Install Java, Maven"
+echo "2. sudo dnf install python3.14"
+echo "3. pip install jpype1"
 
 mvn clean package exec:java
 
