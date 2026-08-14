@@ -179,7 +179,7 @@ py.create_db()
 sel_count = 0
 begin = dt.datetime.now()
 for t in range(re_select):
-    print(f"Time:{t+1}")
+    print(f"Time:{t+1} / {re_select}")
     for i in range(1,total+1):
         st = py.select("from table where id>=? & id<=?", i, i+64)
         for s in st:
