@@ -168,6 +168,7 @@ for t in range(re_select):
 watch = (dt.datetime.now()  - begin).seconds
 watch = max(watch,1)
 print(f"Get()  AVG: {get_count // watch :,}/s") 
+get_count = 0
 
 #Re-Open
 py.close_db()
