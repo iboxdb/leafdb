@@ -15,7 +15,7 @@ jpype.startJVM("--enable-native-access=ALL-UNNAMED")
 print("JVM: ", jpype.getDefaultJVMPath())
 print("Ver: ", jpype.getJVMVersion())
 
-#if using jlink, doesn't need to load this.
+#if using jlink, doesn't need to load jar.
 #jpype.addClassPath("iboxdb-4.1.2.jar")
 
 from java.lang import Long, Double, String
