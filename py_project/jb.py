@@ -31,7 +31,10 @@ print( proto.typeName("id"), proto.typeName("name"), proto.typeName("val") )
 proto = Ason("id:",Long(0), "name:",String("_"), "val:",Double(0.0), "star", BigDecimal('0'))
 print( proto.typeName("id"), proto.typeName("name"), proto.typeName("val") )
 
+from iboxdb.localserver import BoxSystem
 DB.root("../DBRoot")
+
+BoxSystem.DBDebug.DeleteDBFiles(1)
 db = DB(1)
 cfg = db.getConfig()
 cfg.ensureTable(proto,"table","id")
@@ -45,8 +48,7 @@ print(dir(proto))
 print(proto.clone.__doc__)
 
 auto.getDatabase().close()
-
-from iboxdb.localserver import BoxSystem
 BoxSystem.DBDebug.DeleteDBFiles(1)
+
 jpype.shutdownJVM()
 del jpype
