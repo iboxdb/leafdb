@@ -66,7 +66,7 @@ class PyBox:
     def count(self,ql, *params):
         return self.auto.count(ql,params)
     
-
+        
 import datetime as dt    
 import math
 
@@ -76,7 +76,7 @@ py = PyBox(1)
 py.debug_clear()
 py.create_db()
 
-re_select = 9
+re_select = 5
 total = 100_000
 #total = 10
 
@@ -104,7 +104,8 @@ watch = (dt.datetime.now()  - begin).seconds
 watch = max(watch,1)
 print(f"Update AVG: {total // watch :,}")
 
-print(f"Count     : {py.count("from table"):,}")
+fc = py.count("from table")
+print(f"Count     : {fc :,}")
 
 begin = dt.datetime.now()
 for i in range(1,total+1):
@@ -115,7 +116,8 @@ watch = (dt.datetime.now()  - begin).seconds
 watch = max(watch,1)
 print(f"Delete AVG: {total // watch :,}")
 
-print(f"Count     : {py.count("from table"):,}")
+fc = py.count("from table")
+print(f"Count     : {fc:,}")
 
 
 begin = dt.datetime.now()
@@ -129,7 +131,8 @@ for i in range(1,total+1):
 watch = (dt.datetime.now()  - begin).seconds
 watch = max(watch,1)
 print(f"Replace-1 AVG: {total // watch :,}") 
-print(f"Count        : {py.count("from table"):,}")
+fc = py.count("from table")
+print(f"Count        : {fc:,}")
 
 
 begin = dt.datetime.now()
@@ -143,7 +146,8 @@ for i in range(1,total+1):
 watch = (dt.datetime.now()  - begin).seconds
 watch = max(watch,1)
 print(f"Replace-2 AVG: {total // watch :,}") 
-print(f"Count        : {py.count("from table"):,}")
+fc = py.count("from table")
+print(f"Count        : {fc:,}")
 
 for i in range(1,total+1):
     v = py.get("table",i)
