@@ -24,4 +24,4 @@ python test_iboxdb.py
 
 
 
-
+read -p "exit?"
