@@ -108,14 +108,15 @@
                                 <path>${project.build.directory}/modules</path>
                             </modulePath>
                             <modules>
+                                <module>iboxdb</module>
                             	<!-- jlink-image.tar.xz/7z = 17MB  -->
                             	<module>java.logging</module>
                             	<module>java.management</module>
                             	<module>java.sql</module>
                             	<module>java.xml</module>
                                 <module>java.base</module>
+                                <!-- FileSystem needs it to read jar package -->
                                 <module>jdk.zipfs</module>
-                                <module>iboxdb</module>
                             </modules>
                             <jarInclusionPolicy>APP_WITH_DEPENDENCIES</jarInclusionPolicy>
                             <outputDirectory>

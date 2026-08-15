@@ -1,4 +1,4 @@
-print("iBoxDB Java Python!")
+print("Testing...")
 
 import os;
 print(os.environ.get("JAVA_HOME"))
@@ -18,9 +18,9 @@ print("Ver: ", jpype.getJVMVersion())
 #if using jlink, doesn't need to load jar.
 #jpype.addClassPath("iboxdb-4.1.2.jar")
 
-from java.lang import Long, Double, String
-from java.math import BigDecimal          
-from iboxdb.localserver import Ason,DB
+from java.lang import Long, Double, String # type: ignore
+from java.math import BigDecimal # type: ignore         
+from iboxdb.localserver import Ason,DB # type: ignore
 
 print("",Ason.class_,DB.class_)
 
@@ -31,7 +31,7 @@ print( proto.typeName("id"), proto.typeName("name"), proto.typeName("val") )
 proto = Ason("id:",Long(0), "name:",String("_"), "val:",Double(0.0), "star", BigDecimal('0'))
 print( proto.typeName("id"), proto.typeName("name"), proto.typeName("val") )
 
-from iboxdb.localserver import BoxSystem
+from iboxdb.localserver import BoxSystem # type: ignore
 DB.root("../DBRoot")
 
 BoxSystem.DBDebug.DeleteDBFiles(1)
@@ -41,7 +41,9 @@ cfg.ensureTable(proto,"table","id")
 isUnique = False
 cfg.ensureIndex(proto,"table",isUnique,"name")
 auto = db.open()
-
+v = proto.clone()
+v.set("id",auto.newId())
+print(auto.replace("table",v))
 print(auto.select("from table limit 0, 10"))
 print(dir(auto))
 print(dir(proto))

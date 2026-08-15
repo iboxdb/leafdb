@@ -12,8 +12,8 @@ jpype.startJVM("--enable-native-access=ALL-UNNAMED", convertStrings=False)
 #if using jlink, doesn't need to load jar.
 #jpype.addClassPath("iboxdb-4.1.2.jar")
 
-from java.lang import Long, Double, String        
-from iboxdb.localserver import Ason,DB
+from java.lang import Long, Double, String # type: ignore
+from iboxdb.localserver import Ason,DB # type: ignore
 
 # Prototype
 proto = Ason("id:",Long(0), "value:",String("_"))
@@ -39,7 +39,7 @@ class PyBox:
     def debug_clear(self):
         if self.auto != None :
             return False
-        from iboxdb.localserver import BoxSystem
+        from iboxdb.localserver import BoxSystem # type: ignore
         return BoxSystem.DBDebug.DeleteDBFiles(self.n)
     
     def new_id(self):
@@ -68,8 +68,6 @@ class PyBox:
     
         
 import datetime as dt    
-import math
-
 print("iBoxDB Python Single Thread Testing : ")
 
 py = PyBox(1)
