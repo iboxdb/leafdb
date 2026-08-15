@@ -1,8 +1,5 @@
 
 
-# https://github.com/moditect/moditect
-# [user@localhost site-packages]$ jdeps -s  org.jpype.jar 
-
 echo "Online..."
 echo "1. Install Java, Maven"
 echo "2. sudo dnf install python3.14"
