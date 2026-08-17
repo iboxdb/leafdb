@@ -89,6 +89,7 @@
                                         exports iboxdb.localserver;
                                         exports iboxdb.localserver.io;
                                         exports iboxdb.localserver.e;
+                                        exports iboxdb.localserver.replication;
                                         }
                                     </moduleInfoSource>
                                 </module>

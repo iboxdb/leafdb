@@ -59,3 +59,9 @@ MongoDB Delete: 1,000,000 AVG: 3,165 objects/s
 ```
 
 
+
+##### Links
+
+Python Project in (py_project)[py_project/]
+
+
