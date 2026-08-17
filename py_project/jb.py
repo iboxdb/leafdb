@@ -1,4 +1,4 @@
-print("Testing...")
+print("jpype Testing...")
 
 import os;
 print(os.environ.get("JAVA_HOME"))
@@ -8,8 +8,12 @@ print(os.environ.get("JAVA_HOME"))
 # pip install jpype1
 import jpype
 import jpype.imports
+
 from jpype.types import JLong, JDouble, JString 
- 
+
+from jpype import JImplements # ,JOverride
+from jpype.types import JOverride
+
 print("startJVM...");
 jpype.startJVM("--enable-native-access=ALL-UNNAMED")
 print("JVM: ", jpype.getDefaultJVMPath())
@@ -22,7 +26,14 @@ from java.lang import Long, Double, String # type: ignore
 from java.math import BigDecimal # type: ignore         
 from iboxdb.localserver import Ason,DB # type: ignore
 
-print("",Ason.class_,DB.class_)
+
+from iboxdb.localserver.replication import IBoxRecycler # type: ignore
+from iboxdb.localserver import IFunction # type: ignore
+
+print( Ason.class_ )
+print( DB.class_ )
+print( IBoxRecycler.class_ )
+print( IFunction.IFun.class_ )
 
 # Prototype
 proto = Ason(["id:",JLong(0), "name:",JString("_"), "val:",JDouble(0.0)])
@@ -50,6 +61,21 @@ print(auto.replace("table",v))
 print(auto.select("from table limit 0, 10"))
 print(dir(auto))
 print(dir(proto))
+#print(dir(IFunction.IFun))
+@JImplements(IFunction.IFun)
+class MyImpl(object):
+    _str = ""
+    def __init__(self,str):
+        self._str = str
+        pass
+    @JOverride
+    def execute(self, *arg):
+        print(self._str, arg, arg[0], arg[0][0])
+        pass
+
+DB.lock( IFunction(MyImpl("OneImpl")),  "OneNone" )
+
+print("")
 print(proto.clone.__doc__)
 
 auto.getDatabase().close()
