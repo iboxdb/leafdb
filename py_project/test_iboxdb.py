@@ -188,7 +188,8 @@ begin = dt.datetime.now()
 for t in range(re_select):
     print(f"Time:{t+1} / {re_select}")
     for i in range(1,total+1):
-        st = py.select("from table where id>=? & id<=?", i, i+64)
+    	# Long(str(x)) only for test Converting Type 
+        st = py.select("from table where id>=? & id<=?", i, Long(str(i+64)))
         for s in st:
             sel_count = sel_count + 1
         del st
