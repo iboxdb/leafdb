@@ -62,6 +62,8 @@ v = proto.clone()
 v.set("id",auto.newId())
 # s() == set()
 v.s("name","testing")
+x777 = Long(str(777))
+print(x777, x777.getClass().toString() )
 print(auto.replace("table",v))
 print(auto.select("from table limit 0, 10"))
 
