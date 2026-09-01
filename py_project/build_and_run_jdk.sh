@@ -17,7 +17,7 @@ python jb.py
 
 echo ""
 echo ""
-echo "run test."
+echo ""
 
 python --version
 python test_iboxdb.py
