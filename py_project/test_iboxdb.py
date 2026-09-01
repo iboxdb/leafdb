@@ -54,16 +54,16 @@ class PyBox:
     def replace(self,table,obj):
         return self.auto.replace(table,obj)
 
-    def delete(self,table,key):
+    def delete(self,table, *key):
         return self.auto.delete(table,key)
 
-    def get(self,table,key):
+    def get(self,table, *key):
         return self.auto.get(table,key)
     
     def select(self,ql, *params):
         return self.auto.select(ql,params)
     
-    def count(self,ql, *params):
+    def count(self,ql,  *params):
         return self.auto.count(ql,params)
     
         
@@ -129,7 +129,7 @@ for i in range(1,total+1):
 watch = (dt.datetime.now()  - begin).seconds
 watch = max(watch,1)
 print(f"Replace-1 AVG: {total // watch :,}") 
-fc = py.count("from table")
+fc = py.count("from table where id>?", -1000000)
 print(f"Count        : {fc:,}")
 
 
@@ -144,11 +144,19 @@ for i in range(1,total+1):
 watch = (dt.datetime.now()  - begin).seconds
 watch = max(watch,1)
 print(f"Replace-2 AVG: {total // watch :,}") 
-fc = py.count("from table")
+fc = py.count("from table where id>=? & id<=?", -10000000, 10000000)
 print(f"Count        : {fc:,}")
 
 for i in range(1,total+1):
-    v = py.get("table",i)
+    def use_get():
+        return py.get("table",i)
+    def use_select():
+        return py.select("from table where id==?",i)[0]
+    sw = {
+        0 : use_get,
+        1 : use_select
+    } 
+    v = sw.get((i % 2))()
     if not str(v["value"]).startswith("up") : 
         print("Check Replace 3")
 
