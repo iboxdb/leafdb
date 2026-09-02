@@ -14,6 +14,7 @@ import com.mongodb.client.*;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
 import org.bson.conversions.Bson;
+import static com.mongodb.client.model.Sorts.*;
 import static com.mongodb.client.model.Filters.*;
 import static com.mongodb.client.model.Updates.set;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
@@ -39,8 +40,8 @@ public class BenchmarkDBTest {
     public static void main(String[] args) {
         try {
 
-            System.out.println("Benchmark Version 1.4, Java=" + System.getProperty("java.version"));
-            System.out.format("threadCount= %,d batchCount= %,d reinterationSelect= %,d %n %n",
+            System.out.println("Benchmark Version 1.5, Java=" + System.getProperty("java.version"));
+            System.out.format("threadCount= %,d batchCount= %,d reinteration= %,d %n %n",
                     threadCount, batchCount, reinterationSelect);
 
             File mvnConfig = new File(".mvn/jvm.config");
@@ -284,7 +285,9 @@ public class BenchmarkDBTest {
                             int maxId = p * batchCount + batchCount;
                             Bson q = and(gte("_id", minId), lt("_id", maxId));
 
-                            try (MongoCursor<T1> reader = coll.find(q).iterator()) {
+                            try (MongoCursor<T1> reader = coll.find(q)
+                                    .sort(ascending("_id"))
+                                    .iterator()) {
                                 int ti = minId;
                                 while (reader.hasNext()) {
                                     T1 t1 = reader.next();
@@ -333,7 +336,8 @@ public class BenchmarkDBTest {
                             int maxId = p * batchCount + batchCount;
                             Bson q = and(gte("_id", minId), lt("_id", maxId));
 
-                            try (MongoCursor<T1> reader = coll.find(q).iterator()) {
+                            try (MongoCursor<T1> reader = coll.find(q)
+                                    .sort(ascending("_id")).iterator()) {
                                 int ti = minId;
                                 while (reader.hasNext()) {
                                     T1 t1 = reader.next();
@@ -377,7 +381,8 @@ public class BenchmarkDBTest {
                             int maxId = p * batchCount + batchCount;
                             Bson q = and(gte("_id", minId), lt("_id", maxId));
 
-                            try (MongoCursor<T1> reader = coll.find(q).iterator()) {
+                            try (MongoCursor<T1> reader = coll.find(q)
+                                    .sort(ascending("_id")).iterator()) {
                                 int ti = minId;
                                 while (reader.hasNext()) {
                                     T1 t1 = reader.next();
@@ -486,14 +491,6 @@ public class BenchmarkDBTest {
 
         public void setValue(String _value) {
             value = _value;
-        }
-
-        public static <T> List<T> toArray(Iterable<T> it) {
-            ArrayList<T> list = new ArrayList<>();
-            for (T t : it) {
-                list.add(t);
-            }
-            return list;
         }
     }
 
