@@ -1,8 +1,9 @@
 db1.ibx
 db1.ibx.swp
-mavenproject/target/
 DBRoot
+TEST_LEAF_NOSQL
 
+mavenproject/target/
 **/target/
 *.ibx
 *.ibx.swp
