@@ -81,8 +81,8 @@ total = 100_000
 begin = dt.datetime.now()
 for i in range(1,total+1):
     v = proto.clone()
-    v.s("id",py.new_id())
-    v.s("value",str(i))
+    v.set("id",py.new_id())
+    v.set("value",str(i))
     if not py.insert("table",v):
         print("Check Insert")
     pass
@@ -94,7 +94,7 @@ begin = dt.datetime.now()
 for i in range(1,total+1):
     v = py.get("table",i)
     v = v.clone()
-    v.s("value", "UP:" + str(i))
+    v.set("value", "UP:" + str(i))
     if not py.update("table",v):
         print("Check Update")
     pass
@@ -121,8 +121,8 @@ print(f"Count     : {fc:,}")
 begin = dt.datetime.now()
 for i in range(1,total+1):
     v = proto.clone()
-    v.s("id",i)
-    v.s("value",str(i))
+    v.set("id",i)
+    v.set("value",str(i))
     if not py.replace("table",v):
         print("Check Replace 1")
     pass
@@ -136,8 +136,8 @@ print(f"Count        : {fc:,}")
 begin = dt.datetime.now()
 for i in range(1,total+1):
     v = proto.clone()
-    v.s("id",i)
-    v.s("value", "up" + str(i))
+    v.set("id",i)
+    v.set("value", "up" + str(i))
     if not py.replace("table",v):
         print("Check Replace 2")
     pass

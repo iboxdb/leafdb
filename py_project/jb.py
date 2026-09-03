@@ -1,6 +1,6 @@
 print("jpype Testing...")
 
-import os;
+import os
 print(os.environ.get("JAVA_HOME"))
 os.environ["JAVA_HOME"] = "./target/jlink-image/"
 print(os.environ.get("JAVA_HOME"))
@@ -10,7 +10,6 @@ import jpype
 import jpype.imports
 
 #from jpype.types import JLong, JDouble, JString 
-
 from jpype import JImplements # ,JOverride
 from jpype.types import JOverride
 
@@ -27,28 +26,32 @@ from java.math import BigDecimal # type: ignore
 from java.util import Date # type: ignore
 from iboxdb.localserver import Ason,DB # type: ignore
 
-
 from iboxdb.localserver.replication import IBoxRecycler # type: ignore
 from iboxdb.localserver import IFunction # type: ignore
 
 print( Ason.class_ )
 print( DB.class_ )
-print( IBoxRecycler.class_ )
-print( IFunction.IFun.class_ )
+#print( IBoxRecycler.class_ )
+#print( IFunction.IFun.class_ )
 
-
-#proto = Ason(["id:",JLong(0), "name:",JString("_"), "val:",JDouble(0.0)])
-#print( proto.typeName("id"), proto.typeName("name"), proto.typeName("val") )
+                  
 # Prototype
 proto = Ason("id:",Long(0), "name:",String("_"), 
             "val:",Double(0.0), "star:", BigDecimal('0'),
             "ver:",Long(1),"wt:", Date())
 print( proto.typeName("id"), proto.typeName("name"), proto.typeName("val") )
 
-from iboxdb.localserver import BoxSystem # type: ignore
+import datetime
+nn = datetime.datetime.now(datetime.timezone.utc)
+def datetime2date(x:datetime.datetime):
+    return Date(nn.year-1900,nn.month-1,nn.day,nn.hour,nn.minute,nn.second)
+print(nn, ',' , datetime2date(nn) )
+
 DB.root("../DBRoot")
 
+from iboxdb.localserver import BoxSystem # type: ignore
 BoxSystem.DBDebug.DeleteDBFiles(1)
+
 db = DB(1)
 cfg = db.getConfig()
 cfg.ensureTable(proto,"table","id")
@@ -62,8 +65,6 @@ v = proto.clone()
 v.set("id",auto.newId())
 # s() == set()
 v.s("name","testing")
-x777 = Long(str(777))
-print(x777, x777.getClass().toString() )
 print(auto.replace("table",v))
 print(auto.select("from table limit 0, 10"))
 
@@ -84,8 +85,7 @@ class MyImpl(object):
 DB.lock( IFunction(MyImpl("OneImpl")),  "OneNone" )
 
 print("")
-print(proto.clone.__doc__)
-
+#print(proto.clone.__doc__)
 
 for x in range(5):
     v = proto.clone()
@@ -102,3 +102,4 @@ BoxSystem.DBDebug.DeleteDBFiles(1)
 
 jpype.shutdownJVM()
 del jpype
+
