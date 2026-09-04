@@ -35,8 +35,8 @@ public class BenchmarkDBTest {
 
     static int threadCount = 100_000;
     static int batchCount = 10;
-    static int reinterationSelect = 12;
-    static int reTest = 3;
+    static int reinterationSelect = 15;
+    static int reTest = 1;
 
     public static void main(String[] args) {
         try {
