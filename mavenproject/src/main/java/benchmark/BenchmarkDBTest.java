@@ -42,7 +42,7 @@ public class BenchmarkDBTest {
         try {
 
             System.out.println("Benchmark Version 1.6, Java=" + System.getProperty("java.version"));
-            System.out.format("thread= %,d batch= %,d reinteration= %,d test= %,d  %n %n",
+            System.out.format("thread=%,d batch=%,d reinteration=%,d test=%,d  %n %n",
                     threadCount, batchCount, reinterationSelect, reTest);
 
             File mvnConfig = new File(".mvn/jvm.config");
