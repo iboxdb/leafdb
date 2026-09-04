@@ -36,13 +36,14 @@ public class BenchmarkDBTest {
     static int threadCount = 100_000;
     static int batchCount = 10;
     static int reinterationSelect = 12;
+    static int reTest = 3;
 
     public static void main(String[] args) {
         try {
 
-            System.out.println("Benchmark Version 1.5, Java=" + System.getProperty("java.version"));
-            System.out.format("threadCount= %,d batchCount= %,d reinteration= %,d %n %n",
-                    threadCount, batchCount, reinterationSelect);
+            System.out.println("Benchmark Version 1.6, Java=" + System.getProperty("java.version"));
+            System.out.format("thread= %,d batch= %,d reinteration= %,d test= %,d  %n %n",
+                    threadCount, batchCount, reinterationSelect, reTest);
 
             File mvnConfig = new File(".mvn/jvm.config");
             if (mvnConfig.exists()) {
@@ -76,176 +77,178 @@ public class BenchmarkDBTest {
         }
     }
 
-    public static void TestiBoxDB() {
+    public static void TestiBoxDB() throws Exception {
         BoxSystem.DBDebug.DeleteDBFiles(1);
 
-        try (AppServer server = new AppServer()) {
-            final Database db = server.getInstance();
-            final AutoBox auto = db.get();
+        for (int ret = 0; ret < reTest; ret++) {
+            System.out.format("Test: %d/%d %n", ret + 1, reTest);
 
-            long watch = 0;
-            final AtomicInteger count = new AtomicInteger(0);
-            ShuffleExecutorService pool = CreatePool();
-            for (int i = 0; i < threadCount; i++) {
-                final int p = i;
-                pool.execute(new Runnable() {
-                    @Override
-                    public void run() {
+            try (AppServer server = new AppServer()) {
+                final Database db = server.getInstance();
+                final AutoBox auto = db.get();
 
-                        for (int i = 0; i < batchCount; i++) {
-                            int id = (p * batchCount) + i;
-                            auto.insert("T1", new T1(id, Integer.toString(id)));
-                            count.incrementAndGet();
-                        }
+                long watch = 0;
+                final AtomicInteger count = new AtomicInteger(0);
+                ShuffleExecutorService pool = CreatePool();
+                for (int i = 0; i < threadCount; i++) {
+                    final int p = i;
+                    pool.execute(new Runnable() {
+                        @Override
+                        public void run() {
 
-                        for (int t = 0; t < reinterationSelect; t++) {
-                            int minId = p * batchCount + 0;
-                            int maxId = p * batchCount + batchCount;
-                            Iterator<T1> reader = auto
-                                    .select(T1.class, "from T1 where Id>=? & Id<? order by Id",
-                                            minId, maxId).iterator();
-                            int ti = minId;
-                            while (reader.hasNext()) {
-                                T1 t1 = reader.next();
-                                int iv = t1.getId();
-                                if (ti != iv) {
-                                    System.out.println("e");
-                                    throw new RuntimeException(ti + "  " + iv);
-                                }
-                                ti++;
-                            }
-                            if (ti != maxId) {
-                                System.out.println("e");
-                                throw new RuntimeException();
-                            }
-                        }
-                    }
-                });
-            }
-
-            watch = pool.awaitTermination();
-            if (count.get() != (batchCount * threadCount)) {
-                throw new RuntimeException(count + "  "
-                        + (batchCount * threadCount));
-            }
-            int avg = (int) (count.get() / (watch / 1000.0));
-            System.out.format("iBoxDB Insert: %,d AVG: %,d objects/s %n", count.get(), avg);
-
-            // ----------------------Update------------------
-            count.set(0);
-            pool = CreatePool();
-            for (int i = 0; i < threadCount; i++) {
-                final int p = i;
-                pool.execute(new Runnable() {
-                    @Override
-                    public void run() {
-
-                        for (int i = 0; i < batchCount; i++) {
-                            int id = (p * batchCount) + i;
-
-                            T1 t1 = new T1();
-                            t1.setId(id);
-                            t1.setValue("S" + id);
-                            if (auto.update("T1", t1)) {
+                            for (int i = 0; i < batchCount; i++) {
+                                int id = (p * batchCount) + i;
+                                auto.insert("T1", new T1(id, Integer.toString(id)));
                                 count.incrementAndGet();
                             }
-                        }
 
-                        for (int t = 0; t < reinterationSelect; t++) {
-                            int minId = p * batchCount + 0;
-                            int maxId = p * batchCount + batchCount;
-                            Iterator<T1> reader = auto
-                                    .select(T1.class, "from T1 where Id>=? & Id<? order by Id",
-                                            minId, maxId).iterator();
-                            int ti = minId;
-                            while (reader.hasNext()) {
-                                T1 t1 = reader.next();
-                                int iv = t1.getId();
-                                if (ti != iv) {
+                            for (int t = 0; t < reinterationSelect; t++) {
+                                int minId = p * batchCount + 0;
+                                int maxId = p * batchCount + batchCount;
+                                Iterator<T1> reader = auto
+                                        .select(T1.class, "from T1 where Id>=? & Id<? order by Id",
+                                                minId, maxId).iterator();
+                                int ti = minId;
+                                while (reader.hasNext()) {
+                                    T1 t1 = reader.next();
+                                    int iv = t1.getId();
+                                    if (ti != iv) {
+                                        System.out.println("e");
+                                        throw new RuntimeException(ti + "  " + iv);
+                                    }
+                                    ti++;
+                                }
+                                if (ti != maxId) {
                                     System.out.println("e");
-                                    throw new RuntimeException(ti + "  " + iv);
+                                    throw new RuntimeException();
                                 }
-                                if (!("S" + ti).equals(t1.getValue())) {
-                                    System.out.println("e2");
-                                    throw new RuntimeException(ti + "  " + iv);
-                                }
-                                ti++;
-                            }
-                            if (ti != maxId) {
-                                System.out.println("e");
-                                throw new RuntimeException();
                             }
                         }
+                    });
+                }
 
-                    }
-                });
-            }
-            watch = pool.awaitTermination();
-            if (count.get() != (batchCount * threadCount)) {
-                throw new RuntimeException(count + "  "
-                        + (batchCount * threadCount));
-            }
-            avg = (int) (count.get() / (watch / 1000.0));
-            System.out.format("iBoxDB Update: %,d AVG: %,d objects/s %n", count.get(), avg);
+                watch = pool.awaitTermination();
+                if (count.get() != (batchCount * threadCount)) {
+                    throw new RuntimeException(count + "  "
+                            + (batchCount * threadCount));
+                }
+                int avg = (int) (count.get() / (watch / 1000.0));
+                System.out.format("iBoxDB Insert: %,d AVG: %,d objects/s %n", count.get(), avg);
 
-            // ------------------------Delete------------------
-            count.set(0);
-            pool = CreatePool();
-            for (int i = 0; i < threadCount; i++) {
-                final int p = i;
-                pool.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        for (int t = 0; t < reinterationSelect; t++) {
-                            int minId = p * batchCount + 0;
-                            int maxId = p * batchCount + batchCount;
-                            Iterator<T1> reader = auto
-                                    .select(T1.class, "from T1 where Id>=? & Id<? order by Id",
-                                            minId, maxId).iterator();
-                            int ti = minId;
-                            while (reader.hasNext()) {
-                                T1 t1 = reader.next();
-                                int iv = t1.getId();
-                                if (ti != iv) {
+                // ----------------------Update------------------
+                count.set(0);
+                pool = CreatePool();
+                for (int i = 0; i < threadCount; i++) {
+                    final int p = i;
+                    pool.execute(new Runnable() {
+                        @Override
+                        public void run() {
+
+                            for (int i = 0; i < batchCount; i++) {
+                                int id = (p * batchCount) + i;
+
+                                T1 t1 = new T1();
+                                t1.setId(id);
+                                t1.setValue("S" + id);
+                                if (auto.update("T1", t1)) {
+                                    count.incrementAndGet();
+                                }
+                            }
+
+                            for (int t = 0; t < reinterationSelect; t++) {
+                                int minId = p * batchCount + 0;
+                                int maxId = p * batchCount + batchCount;
+                                Iterator<T1> reader = auto
+                                        .select(T1.class, "from T1 where Id>=? & Id<? order by Id",
+                                                minId, maxId).iterator();
+                                int ti = minId;
+                                while (reader.hasNext()) {
+                                    T1 t1 = reader.next();
+                                    int iv = t1.getId();
+                                    if (ti != iv) {
+                                        System.out.println("e");
+                                        throw new RuntimeException(ti + "  " + iv);
+                                    }
+                                    if (!("S" + ti).equals(t1.getValue())) {
+                                        System.out.println("e2");
+                                        throw new RuntimeException(ti + "  " + iv);
+                                    }
+                                    ti++;
+                                }
+                                if (ti != maxId) {
                                     System.out.println("e");
-                                    throw new RuntimeException(ti + "  " + iv);
+                                    throw new RuntimeException();
                                 }
-                                if (!("S" + ti).equals(t1.getValue())) {
-                                    System.out.println("e2");
-                                    throw new RuntimeException(ti + "  " + iv);
+                            }
+
+                        }
+                    });
+                }
+                watch = pool.awaitTermination();
+                if (count.get() != (batchCount * threadCount)) {
+                    throw new RuntimeException(count + "  "
+                            + (batchCount * threadCount));
+                }
+                avg = (int) (count.get() / (watch / 1000.0));
+                System.out.format("iBoxDB Update: %,d AVG: %,d objects/s %n", count.get(), avg);
+
+                // ------------------------Delete------------------
+                count.set(0);
+                pool = CreatePool();
+                for (int i = 0; i < threadCount; i++) {
+                    final int p = i;
+                    pool.execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            for (int t = 0; t < reinterationSelect; t++) {
+                                int minId = p * batchCount + 0;
+                                int maxId = p * batchCount + batchCount;
+                                Iterator<T1> reader = auto
+                                        .select(T1.class, "from T1 where Id>=? & Id<? order by Id",
+                                                minId, maxId).iterator();
+                                int ti = minId;
+                                while (reader.hasNext()) {
+                                    T1 t1 = reader.next();
+                                    int iv = t1.getId();
+                                    if (ti != iv) {
+                                        System.out.println("e");
+                                        throw new RuntimeException(ti + "  " + iv);
+                                    }
+                                    if (!("S" + ti).equals(t1.getValue())) {
+                                        System.out.println("e2");
+                                        throw new RuntimeException(ti + "  " + iv);
+                                    }
+                                    ti++;
                                 }
-                                ti++;
+                                if (ti != maxId) {
+                                    System.out.println("e");
+                                    throw new RuntimeException();
+                                }
                             }
-                            if (ti != maxId) {
-                                System.out.println("e");
-                                throw new RuntimeException();
+
+                            for (int i = 0; i < batchCount; i++) {
+                                int id = (p * batchCount) + i;
+                                if (auto.delete("T1", id)) {
+                                    count.incrementAndGet();
+                                }
                             }
+
                         }
+                    });
+                }
+                watch = pool.awaitTermination();
+                if (count.get() != (batchCount * threadCount)) {
+                    throw new RuntimeException(count + "  "
+                            + (batchCount * threadCount));
+                }
+                avg = (int) (count.get() / (watch / 1000.0));
+                System.out.format("iBoxDB Delete: %,d AVG: %,d objects/s %n", count.get(), avg);
 
-                        for (int i = 0; i < batchCount; i++) {
-                            int id = (p * batchCount) + i;
-                            if (auto.delete("T1", id)) {
-                                count.incrementAndGet();
-                            }
-                        }
-
-                    }
-                });
-            }
-            watch = pool.awaitTermination();
-            if (count.get() != (batchCount * threadCount)) {
-                throw new RuntimeException(count + "  "
-                        + (batchCount * threadCount));
-            }
-            avg = (int) (count.get() / (watch / 1000.0));
-            System.out.format("iBoxDB Delete: %,d AVG: %,d objects/s %n", count.get(), avg);
-
-            if (auto.count("from T1") != 0) {
-                throw new RuntimeException("SC");
+                if (auto.count("from T1") != 0) {
+                    throw new RuntimeException("SC");
+                }
             }
 
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 
@@ -256,177 +259,183 @@ public class BenchmarkDBTest {
         mongoLogger = Logger.getLogger("org.bson");
         mongoLogger.setLevel(Level.OFF);
 
-        MongoClient mongoClient = MongoClients.create();
-        try {
-            CodecRegistry pojoCodecRegistry = fromRegistries(MongoClientSettings.getDefaultCodecRegistry(),
-                    fromProviders(PojoCodecProvider.builder().automatic(true).build()));
-            MongoDatabase database = mongoClient.getDatabase("test").withCodecRegistry(pojoCodecRegistry);
-            MongoCollection<T1> coll = database.getCollection("T1", T1.class);
+        try (MongoClient mongoClient = MongoClients.create()) {
+            MongoDatabase database = mongoClient.getDatabase("test");
+            MongoCollection coll = database.getCollection("T1");
             coll.drop();
+        }
 
-            long watch = 0;
-            final AtomicInteger count = new AtomicInteger(0);
-            ShuffleExecutorService pool = CreatePool();
-            for (int i = 0; i < threadCount; i++) {
-                final int p = i;
-                pool.execute(new Runnable() {
-                    @Override
-                    public void run() {
+        for (int ret = 0; ret < reTest; ret++) {
+            System.out.format("Test: %d/%d %n", ret + 1, reTest);
 
-                        for (int i = 0; i < batchCount; i++) {
-                            int id = (p * batchCount) + i;
-                            coll.insertOne(new T1(id, Integer.toString(id)));
-                            count.incrementAndGet();
+            try (MongoClient mongoClient = MongoClients.create()) {
+                CodecRegistry pojoCodecRegistry = fromRegistries(MongoClientSettings.getDefaultCodecRegistry(),
+                        fromProviders(PojoCodecProvider.builder().automatic(true).build()));
+                MongoDatabase database = mongoClient.getDatabase("test").withCodecRegistry(pojoCodecRegistry);
+                MongoCollection<T1> coll = database.getCollection("T1", T1.class);
 
-                        }
+                long watch = 0;
+                final AtomicInteger count = new AtomicInteger(0);
+                ShuffleExecutorService pool = CreatePool();
+                for (int i = 0; i < threadCount; i++) {
+                    final int p = i;
+                    pool.execute(new Runnable() {
+                        @Override
+                        public void run() {
 
-                        for (int t = 0; t < reinterationSelect; t++) {
-                            int minId = p * batchCount + 0;
-                            int maxId = p * batchCount + batchCount;
-                            Bson q = and(gte("_id", minId), lt("_id", maxId));
-
-                            try (MongoCursor<T1> reader = coll.find(q)
-                                    .sort(ascending("_id"))
-                                    .iterator()) {
-                                int ti = minId;
-                                while (reader.hasNext()) {
-                                    T1 t1 = reader.next();
-                                    int iv = t1.getId();
-                                    if (ti != iv) {
-                                        System.out.println("e");
-                                        throw new RuntimeException(ti + "  " + iv);
-                                    }
-                                    ti++;
-                                }
-                                if (ti != maxId) {
-                                    System.out.println("e");
-                                    throw new RuntimeException();
-                                }
-                            }
-                        }
-
-                    }
-                });
-            }
-            watch = pool.awaitTermination();
-            if (count.get() != (batchCount * threadCount)) {
-                throw new Exception(count + "  " + (batchCount * threadCount));
-            }
-            int avg = (int) (count.get() / (watch / 1000.0));
-
-            System.out.format("MongoDB Insert: %,d AVG: %,d objects/s %n", count.get(), avg);
-
-            // ---------------Update-----------------------------
-            count.set(0);
-            pool = CreatePool();
-            for (int i = 0; i < threadCount; i++) {
-                final int p = i;
-                pool.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        for (int i = 0; i < batchCount; i++) {
-                            int id = (p * batchCount) + i;
-                            if (coll.updateOne(eq("_id", id), set("value", "S" + id)).getModifiedCount() == 1) {
+                            for (int i = 0; i < batchCount; i++) {
+                                int id = (p * batchCount) + i;
+                                coll.insertOne(new T1(id, Integer.toString(id)));
                                 count.incrementAndGet();
+
                             }
-                        }
 
-                        for (int t = 0; t < reinterationSelect; t++) {
-                            int minId = p * batchCount + 0;
-                            int maxId = p * batchCount + batchCount;
-                            Bson q = and(gte("_id", minId), lt("_id", maxId));
+                            for (int t = 0; t < reinterationSelect; t++) {
+                                int minId = p * batchCount + 0;
+                                int maxId = p * batchCount + batchCount;
+                                Bson q = and(gte("_id", minId), lt("_id", maxId));
 
-                            try (MongoCursor<T1> reader = coll.find(q)
-                                    .sort(ascending("_id")).iterator()) {
-                                int ti = minId;
-                                while (reader.hasNext()) {
-                                    T1 t1 = reader.next();
-                                    int iv = t1.getId();
-                                    if (ti != iv) {
+                                try (MongoCursor<T1> reader = coll.find(q)
+                                        .sort(ascending("_id"))
+                                        .iterator()) {
+                                    int ti = minId;
+                                    while (reader.hasNext()) {
+                                        T1 t1 = reader.next();
+                                        int iv = t1.getId();
+                                        if (ti != iv) {
+                                            System.out.println("e");
+                                            throw new RuntimeException(ti + "  " + iv);
+                                        }
+                                        ti++;
+                                    }
+                                    if (ti != maxId) {
                                         System.out.println("e");
-                                        throw new RuntimeException(ti + "  " + iv);
+                                        throw new RuntimeException();
                                     }
-                                    if (!("S" + ti).equals(t1.getValue())) {
-                                        System.out.println("e2");
-                                        throw new RuntimeException(ti + "  " + iv);
-                                    }
-                                    ti++;
-                                }
-                                if (ti != maxId) {
-                                    System.out.println("e");
-                                    throw new RuntimeException();
                                 }
                             }
+
                         }
-                    }
-                });
-            }
-            watch = pool.awaitTermination();
-            if (count.get() != (batchCount * threadCount)) {
-                throw new Exception(count + "  " + (batchCount * threadCount));
-            }
-            avg = (int) (count.get() / (watch / 1000.0));
-            System.out.format("MongoDB Update: %,d AVG: %,d objects/s %n", count.get(), avg);
+                    });
+                }
+                watch = pool.awaitTermination();
+                if (count.get() != (batchCount * threadCount)) {
+                    throw new Exception(count + "  " + (batchCount * threadCount));
+                }
+                int avg = (int) (count.get() / (watch / 1000.0));
 
-            //--------------- Delete --------------------
-            count.set(0);
-            pool = CreatePool();
-            for (int i = 0; i < threadCount; i++) {
-                final int p = i;
-                pool.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        for (int t = 0; t < reinterationSelect; t++) {
-                            int minId = p * batchCount + 0;
-                            int maxId = p * batchCount + batchCount;
-                            Bson q = and(gte("_id", minId), lt("_id", maxId));
+                System.out.format("MongoDB Insert: %,d AVG: %,d objects/s %n", count.get(), avg);
 
-                            try (MongoCursor<T1> reader = coll.find(q)
-                                    .sort(ascending("_id")).iterator()) {
-                                int ti = minId;
-                                while (reader.hasNext()) {
-                                    T1 t1 = reader.next();
-                                    int iv = t1.getId();
-                                    if (ti != iv) {
+                // ---------------Update-----------------------------
+                count.set(0);
+                pool = CreatePool();
+                for (int i = 0; i < threadCount; i++) {
+                    final int p = i;
+                    pool.execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            for (int i = 0; i < batchCount; i++) {
+                                int id = (p * batchCount) + i;
+                                if (coll.updateOne(eq("_id", id), set("value", "S" + id)).getModifiedCount() == 1) {
+                                    count.incrementAndGet();
+                                }
+                            }
+
+                            for (int t = 0; t < reinterationSelect; t++) {
+                                int minId = p * batchCount + 0;
+                                int maxId = p * batchCount + batchCount;
+                                Bson q = and(gte("_id", minId), lt("_id", maxId));
+
+                                try (MongoCursor<T1> reader = coll.find(q)
+                                        .sort(ascending("_id")).iterator()) {
+                                    int ti = minId;
+                                    while (reader.hasNext()) {
+                                        T1 t1 = reader.next();
+                                        int iv = t1.getId();
+                                        if (ti != iv) {
+                                            System.out.println("e");
+                                            throw new RuntimeException(ti + "  " + iv);
+                                        }
+                                        if (!("S" + ti).equals(t1.getValue())) {
+                                            System.out.println("e2");
+                                            throw new RuntimeException(ti + "  " + iv);
+                                        }
+                                        ti++;
+                                    }
+                                    if (ti != maxId) {
                                         System.out.println("e");
-                                        throw new RuntimeException(ti + "  " + iv);
+                                        throw new RuntimeException();
                                     }
-                                    if (!("S" + ti).equals(t1.getValue())) {
-                                        System.out.println("e2");
-                                        throw new RuntimeException(ti + "  " + iv);
-                                    }
-                                    ti++;
-                                }
-                                if (ti != maxId) {
-                                    System.out.println("e");
-                                    throw new RuntimeException();
                                 }
                             }
                         }
+                    });
+                }
+                watch = pool.awaitTermination();
+                if (count.get() != (batchCount * threadCount)) {
+                    throw new Exception(count + "  " + (batchCount * threadCount));
+                }
+                avg = (int) (count.get() / (watch / 1000.0));
+                System.out.format("MongoDB Update: %,d AVG: %,d objects/s %n", count.get(), avg);
 
-                        for (int i = 0; i < batchCount; i++) {
-                            int id = (p * batchCount) + i;
-                            if (coll.deleteOne(eq("_id", id)).getDeletedCount() == 1) {
-                                count.incrementAndGet();
+                //--------------- Delete --------------------
+                count.set(0);
+                pool = CreatePool();
+                for (int i = 0; i < threadCount; i++) {
+                    final int p = i;
+                    pool.execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            for (int t = 0; t < reinterationSelect; t++) {
+                                int minId = p * batchCount + 0;
+                                int maxId = p * batchCount + batchCount;
+                                Bson q = and(gte("_id", minId), lt("_id", maxId));
+
+                                try (MongoCursor<T1> reader = coll.find(q)
+                                        .sort(ascending("_id")).iterator()) {
+                                    int ti = minId;
+                                    while (reader.hasNext()) {
+                                        T1 t1 = reader.next();
+                                        int iv = t1.getId();
+                                        if (ti != iv) {
+                                            System.out.println("e");
+                                            throw new RuntimeException(ti + "  " + iv);
+                                        }
+                                        if (!("S" + ti).equals(t1.getValue())) {
+                                            System.out.println("e2");
+                                            throw new RuntimeException(ti + "  " + iv);
+                                        }
+                                        ti++;
+                                    }
+                                    if (ti != maxId) {
+                                        System.out.println("e");
+                                        throw new RuntimeException();
+                                    }
+                                }
+                            }
+
+                            for (int i = 0; i < batchCount; i++) {
+                                int id = (p * batchCount) + i;
+                                if (coll.deleteOne(eq("_id", id)).getDeletedCount() == 1) {
+                                    count.incrementAndGet();
+                                }
                             }
                         }
-                    }
-                });
-            }
-            watch = pool.awaitTermination();
-            if (count.get() != (batchCount * threadCount)) {
-                throw new Exception(count + "  " + (batchCount * threadCount));
-            }
-            avg = (int) (count.get() / (watch / 1000.0));
-            System.out.format("MongoDB Delete: %,d AVG: %,d objects/s %n", count.get(), avg);
-            //------------------End------------- 
+                    });
+                }
+                watch = pool.awaitTermination();
+                if (count.get() != (batchCount * threadCount)) {
+                    throw new Exception(count + "  " + (batchCount * threadCount));
+                }
+                avg = (int) (count.get() / (watch / 1000.0));
+                System.out.format("MongoDB Delete: %,d AVG: %,d objects/s %n", count.get(), avg);
+                //------------------End------------- 
 
-            if (coll.countDocuments() != 0) {
-                throw new RuntimeException("SC");
+                if (coll.countDocuments() != 0) {
+                    throw new RuntimeException("SC");
+                }
             }
-        } finally {
-            // was interrupted but is still alive after waiting at least 15000msecs
-            mongoClient.close();
+
         }
     }
 
