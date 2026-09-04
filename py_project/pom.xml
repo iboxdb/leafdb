@@ -123,8 +123,10 @@
                             <outputDirectory>
                                 ${project.build.directory}/jlink-image
                             </outputDirectory>
+                            <stripDebug>true</stripDebug>
                             <launcher>
                             </launcher>
+                            
                         </configuration>
                     </execution>
         

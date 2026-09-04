@@ -12,6 +12,7 @@ import jpype.imports
 #from jpype.types import JLong, JDouble, JString 
 from jpype import JImplements # ,JOverride
 from jpype.types import JOverride
+from datetime import datetime, timezone
 
 print("startJVM...");
 jpype.startJVM("--enable-native-access=ALL-UNNAMED")
@@ -38,14 +39,16 @@ print( DB.class_ )
 # Prototype
 proto = Ason("id:",Long(0), "name:",String("_"), 
             "val:",Double(0.0), "star:", BigDecimal('0'),
-            "ver:",Long(1),"wt:", Date())
+            "ver:",Long(1),"wt:", Date() )
 print( proto.typeName("id"), proto.typeName("name"), proto.typeName("val") )
 
-import datetime
-nn = datetime.datetime.now(datetime.timezone.utc)
-def datetime2date(x:datetime.datetime):
+from copy import copy
+nn = datetime.now(timezone.utc)
+def datetime2date(x:datetime):
     return Date(nn.year-1900,nn.month-1,nn.day,nn.hour,nn.minute,nn.second)
 print(nn, ',' , datetime2date(nn) )
+print(nn, ',' , datetime.fromtimestamp(nn.timestamp(),timezone.utc))
+print( dict(Ason( copy({'timestamp':datetime.now(timezone.utc).timestamp()}) )) )
 
 DB.root("../DBRoot")
 
