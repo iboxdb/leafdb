@@ -74,7 +74,7 @@ py = PyBox(1)
 py.debug_clear()
 py.create_db()
 
-re_select = 5
+re_select = 2
 total = 100_000
 #total = 10
 
