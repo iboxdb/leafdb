@@ -1,5 +1,16 @@
 
 
+import os;
+
+# build from .sh/.bat OR build from here
+build_command = "mvn clean package exec:java"
+print( "\r\n $ " ,  build_command)  
+os.system(build_command)
+print("\r\n"*20)
+
+
+#  =======================================================================================  #
+
 
 print("=========================")
 print("iBoxDB.Java & Python")
