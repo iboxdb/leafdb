@@ -147,7 +147,7 @@ if __name__ == "__main__" :
     jmap["bs"] = Bytes([4,5,6])
     jmap["os"] = Objects([4,None,6, Dict({"id":11}) ])
     print( db_tostring(jmap) )
-    db_root("../DBRoot")
+    db_root("../TEST_LEAF_NOSQL")
     db_debug_deletefile(17)
     print(DBException)
     pass

@@ -21,7 +21,7 @@ print("Single Thread Testing")
 from _load_iboxdb import *
 
 Address = 17        
-db_root("../DBRoot")
+db_root("../TEST_LEAF_NOSQL")
 db_debug_deletefile(Address)
 
 # Prototype
