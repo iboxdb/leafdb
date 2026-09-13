@@ -14,11 +14,6 @@ call mvn clean package exec:java
 .\target\jlink-image\bin\java -cp .\target\jlink-image\jars\linkjdk-1.0.jar benchmark.BenchmarkDBTest
 
 
-echo "environment."
-python --version
-python jb.py
-
-
 echo ""
 echo ""
 echo "run test."

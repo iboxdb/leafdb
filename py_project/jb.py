@@ -45,7 +45,7 @@ print( proto.typeName("id"), proto.typeName("name"), proto.typeName("val") )
 from copy import copy
 nn = datetime.now(timezone.utc)
 def datetime2date(x:datetime):
-    return Date(nn.year-1900,nn.month-1,nn.day,nn.hour,nn.minute,nn.second)
+    return Date(x.year-1900,x.month-1,x.day,x.hour,x.minute,x.second)
 print(nn, ',' , datetime2date(nn) )
 print(nn, ',' , datetime.fromtimestamp(nn.timestamp(),timezone.utc))
 print( dict(Ason( copy({'timestamp':datetime.now(timezone.utc).timestamp()}) )) )

@@ -62,6 +62,6 @@ MongoDB Delete: 1,000,000 AVG: 3,165 objects/s
 
 ##### Python Links
 
-Python Project in [py_project/build_and_run_jdk.sh](py_project/build_and_run_jdk.sh)
+Python Project in [py_project/README.md](py_project/README.md)
 
 

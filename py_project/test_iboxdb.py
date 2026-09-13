@@ -1,116 +1,69 @@
 
 
-import os;
-os.environ["JAVA_HOME"] = "./target/jlink-image/"
 
-import jpype
-import jpype.imports
+print("=========================")
+print("iBoxDB.Java & Python")
+print("=========================")
 
-#convertStrings: force Java strings to cast to Python strings
-jpype.startJVM("--enable-native-access=ALL-UNNAMED", convertStrings=False)
+print("Single Thread Testing")
 
-#if using jlink, doesn't need to load jar.
-#jpype.addClassPath("iboxdb-4.1.2.jar")
+from _load_iboxdb import *
 
-from java.lang import Long, Double, String # type: ignore
-from iboxdb.localserver import Ason,DB # type: ignore
+Address = 17        
+db_root("../DBRoot")
+db_debug_deletefile(Address)
 
 # Prototype
-proto = Ason("id:",Long(0), "value:",String("_"))
+proto = Ason("id:",Long(0), "value:",String("_"), "ver:",Long(0) )
 
-class PyBox:
-    auto = None
-    n = 0
-    def __init__(self,n=1,root="../DBRoot"):     
-        DB.root(root)
-        self.n = n
-    
-    def create_db(self):
-        db = DB(self.n)
-        cfg = db.getConfig()
-        cfg.ensureTable(proto,"table","id")
-        self.auto = db.open()
-
-    def close_db(self):
-        if self.auto != None :
-            self.auto.getDatabase().close()
-            self.auto = None
-
-    def debug_clear(self):
-        if self.auto != None :
-            return False
-        from iboxdb.localserver import BoxSystem # type: ignore
-        return BoxSystem.DBDebug.DeleteDBFiles(self.n)
-    
-    def new_id(self):
-        return self.auto.newId()
-    
-    def insert(self,table,obj):
-        return self.auto.insert(table,obj)
-    
-    def update(self,table,obj):
-        return self.auto.update(table,obj)
-    
-    def replace(self,table,obj):
-        return self.auto.replace(table,obj)
-
-    def delete(self,table, *key):
-        return self.auto.delete(table,key)
-
-    def get(self,table, *key):
-        return self.auto.get(table,key)
-    
-    def select(self,ql, *params):
-        return self.auto.select(ql,params)
-    
-    def count(self,ql,  *params):
-        return self.auto.count(ql,params)
-    
-        
-import datetime as dt    
-print("iBoxDB Python Single Thread Testing : ")
-
-py = PyBox(1)
-py.debug_clear()
-py.create_db()
+py = PyBox(Address)  
+cfg = py.get_config()
+cfg.ensure_table(proto,"table","id")
+cfg.ensure_index(proto,"table", False, "value")
+cfg.ensure_increment(proto,"table","ver")
+cfg.cache_length( 1024*1024*512 )
+py.open()
 
 re_select = 2
 total = 100_000
 #total = 10
 
-begin = dt.datetime.now()
+begin = datetime.now()
 for i in range(1,total+1):
-    v = proto.clone()
+    # clone to modify, object is reference
+    v = copy(proto)
     v.set("id",py.new_id())
     v.set("value",str(i))
     if not py.insert("table",v):
         print("Check Insert")
     pass
-watch = (dt.datetime.now()  - begin).seconds
+watch = (datetime.now()  - begin).seconds
 watch = max(watch,1)
 print(f"Insert AVG: {total // watch :,}") 
 
-begin = dt.datetime.now()
+
+begin = datetime.now()
 for i in range(1,total+1):
     v = py.get("table",i)
-    v = v.clone()
+    v = copy(v)
     v.set("value", "UP:" + str(i))
     if not py.update("table",v):
         print("Check Update")
     pass
-watch = (dt.datetime.now()  - begin).seconds
+watch = (datetime.now()  - begin).seconds
 watch = max(watch,1)
 print(f"Update AVG: {total // watch :,}")
+
 
 fc = py.count("from table")
 print(f"Count     : {fc :,}")
 
-begin = dt.datetime.now()
+begin = datetime.now()
 for i in range(1,total+1):
     if not py.delete("table",i):
         print("Check Delete")
     pass
-watch = (dt.datetime.now()  - begin).seconds
+watch = (datetime.now()  - begin).seconds
 watch = max(watch,1)
 print(f"Delete AVG: {total // watch :,}")
 
@@ -118,50 +71,46 @@ fc = py.count("from table")
 print(f"Count     : {fc:,}")
 
 
-begin = dt.datetime.now()
+begin = datetime.now()
 for i in range(1,total+1):
-    v = proto.clone()
+    v = copy(proto)
     v.set("id",i)
     v.set("value",str(i))
     if not py.replace("table",v):
         print("Check Replace 1")
     pass
-watch = (dt.datetime.now()  - begin).seconds
+watch = (datetime.now()  - begin).seconds
 watch = max(watch,1)
 print(f"Replace-1 AVG: {total // watch :,}") 
-fc = py.count("from table where id>?", -1000000)
+fc = py.count("from table")
 print(f"Count        : {fc:,}")
 
 
-begin = dt.datetime.now()
+begin = datetime.now()
 for i in range(1,total+1):
-    v = proto.clone()
+    v = copy(proto)
     v.set("id",i)
     v.set("value", "up" + str(i))
     if not py.replace("table",v):
         print("Check Replace 2")
     pass
-watch = (dt.datetime.now()  - begin).seconds
+watch = (datetime.now()  - begin).seconds
 watch = max(watch,1)
 print(f"Replace-2 AVG: {total // watch :,}") 
-fc = py.count("from table where id>=? & id<=?", -10000000, 10000000)
+fc = py.count("from table")
 print(f"Count        : {fc:,}")
 
 for i in range(1,total+1):
-    def use_get():
-        return py.get("table",i)
-    def use_select():
-        return py.select("from table where id==?",i)[0]
-    sw = {
-        0 : use_get,
-        1 : use_select
-    } 
-    v = sw.get((i % 2))()
+    if i % 2 == 0:
+        v = py.get("table",i)
+    else:
+        v = py.select("from table where id==?", Long(i))[0]
     if not str(v["value"]).startswith("up") : 
         print("Check Replace 3")
 
+
 get_count = 0
-begin = dt.datetime.now()
+begin = datetime.now()
 for t in range(re_select):
     for i in range(1,total+1):
         v = py.get("table",i)
@@ -171,33 +120,34 @@ for t in range(re_select):
         else:
             get_count = get_count + 1
 
-watch = (dt.datetime.now()  - begin).seconds
+watch = (datetime.now()  - begin).seconds
 watch = max(watch,1)
 print(f"Get()  AVG: {get_count // watch :,}/s") 
 get_count = 0
 
 #Re-Open
-py.close_db()
+py.close()
 del py
 
-py = PyBox(1)
-py.create_db()
+py = PyBox(Address)
+py.open()
+
 
 sel_count = 0
-begin = dt.datetime.now()
+begin = datetime.now()
 for t in range(re_select):
     print(f"Time:{t+1} / {re_select}")
-    for i in range(1,total+1):
-    	# Long(str(x)) only for test Converting Type 
-        st = py.select("from table where id>=? & id<=?", i, Long(str(i+64)))
+    for i in range(1,total+1): 
+        st = py.select("from table where id>=? & id<=?", Long(i), Long(i+64))
         for s in st:
             sel_count = sel_count + 1
         del st
         
-watch = (dt.datetime.now()  - begin).seconds
+watch = (datetime.now()  - begin).seconds
 watch = max(watch,1)
 print(f"Select AVG: {sel_count // watch :,}/s") 
 
-py.close_db()
+py.close()
+del py
 
-print("End.")
+print(input("End."))
