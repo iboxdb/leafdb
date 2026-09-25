@@ -34,7 +34,7 @@
         <dependency>
             <groupId>iboxdb</groupId>
             <artifactId>iboxdb</artifactId>
-            <version>4.1.2</version>
+            <version>4.2.1</version>
         </dependency>
     </dependencies>
 
@@ -81,7 +81,7 @@
                                     <artifact>
                                         <groupId>iboxdb</groupId>
                                         <artifactId>iboxdb</artifactId>
-                                        <version>4.1.2</version>
+                                        <version>4.2.1</version>
                                     </artifact>
                                     <moduleInfoSource>
                                         module iboxdb {
