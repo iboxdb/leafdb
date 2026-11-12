@@ -18,7 +18,7 @@ print("=========================")
 
 print("Single Thread Testing")
 
-from _load_iboxdb import *
+from load_iboxdb import *
 
 Address = 17        
 db_root("../TEST_LEAF_NOSQL")

@@ -20,7 +20,7 @@ print("JVM: ", jpype.getDefaultJVMPath())
 print("Ver: ", jpype.getJVMVersion())
 
 #if using jlink, doesn't need to load jar.
-#jpype.addClassPath("iboxdb-4.1.2.jar")
+#jpype.addClassPath("iboxdb-4.1.3.jar")
 
 from java.lang import Long, Double, String # type: ignore
 from java.math import BigDecimal # type: ignore         
